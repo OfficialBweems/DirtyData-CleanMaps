@@ -1,0 +1,11 @@
+name: "New Stuff"
+navbar:
+  title: "HOME"
+  left:
+    - text: "Workshop Code"
+      href: DataToMaps.html
+output_dir: "."
+output:
+  html_document:
+    theme: jekyll-theme-slate
+    

@@ -1,0 +1,43 @@
+Region,Location,Site_name,Treatment,Lat,Long,Type,Site Length (m),Site Width (m)
+Florida,Biscayne,Biscayne1,non-removal,25.38374,-80.15926,patch,48,34
+Florida,Biscayne,Biscayne2,Removal,25.3891,-80.1749,patch,56,39
+Florida,Biscayne,Biscayne3,non-removal,25.37149,-80.18525,patch,29,26
+Florida,Biscayne,Biscayne4,Removal,25.36596,-80.17025,patch,88,70
+Florida,Biscayne,Biscayne5,non-removal,25.34455,-80.19677,patch,56,35
+Florida,Biscayne,Biscayne6,Removal,25.32747,-80.19591,patch,43,42
+Florida,Biscayne,Biscayne7,non-removal,25.4388,-80.15648,patch,48,35
+Florida,Biscayne,Biscayne8,Removal,25.41211,-80.15293,patch,50,40
+Florida,Biscayne,Biscayne9,Removal,25.29342,-80.16365,continuous,50,40
+Florida,Biscayne,Biscayne10,Removal,25.3259,-80.15105,continuous,50,40
+Florida,Biscayne,Biscayne11,non-removal,25.362517,-80.14045,continuous,50,40
+Florida,Biscayne,Biscayne12,Removal,25.38493,-80.132617,continuous,50,40
+Florida,Biscayne,Biscayne13,non-removal,25.306517,-80.15473,continuous,50,40
+Florida,Biscayne,Biscayne14,Removal,25.44028,80.11593,continuous,50,40
+Florida,Biscayne,Biscayne15,non-removal,25.341617,-80.146217,continuous,50,40
+Florida,Biscayne,Biscayne16,non-removal,25.41218,-80.12433,continuous,50,40
+Florida,Conch Reef,Conch1,Removal,24.9515,-80.45342,continuous,50,40
+Florida,Conch Reef,Conch2,Non-removal,24.95083,-80.45528,continuous,50,40
+Florida,Conch Reef,Conch3,Removal,24.94922,-80.45422,continuous,50,40
+Florida,Key Largo,KL1,Removal,25.05202,-80.33108,continuous,42,34
+Florida,Key Largo,KL2,Non-removal,25.18487,-80.26943,patch,21,9
+Florida,Key Largo,KL3,Non-removal,25.06985,-80.3169,continuous,50,40
+Florida,Key Largo,KL4,Removal,25.13613,-80.33527,patch,42,19
+Florida,Key Largo,KL5,Removal,25.2076,-80.28345,patch,34,16
+Florida,Key Largo,KL6,Non-removal,25.239,-80.27525,patch,57,22
+Florida,Key Largo,KL7,Removal,25.27105,-80.25161,patch,55,34
+Florida,Key Largo,KL8,Non-removal,25.0427,-80.4077,patch,19,9
+Florida,Key Largo,KL9,Non-removal,25.09616,-80.3584,patch,24,16
+Florida,Key Largo,KL10,Removal,25.0995,-80.3418,patch,51,21
+Florida,Key Largo,KL11,Non-removal,25.10627,-80.33422,patch,19,14
+Florida,Key Largo,KL12,Removal,25.11229,-80.33028,patch,50,40
+Florida,Key Largo,KL13,Non-removal,25.12267,-80.3382,patch,70,38
+Florida,Key Largo,KL14,Removal,25.15847,-80.25019,continuous,50,40
+Florida,Key Largo,KL15,Non-removal,25.18503,-80.2245,continuous,50,40
+Florida,Key Largo,KL16,Removal,25.197817,-80.219733,continuous,50,40
+Florida,Key Largo,KL17,Non-removal,25.01708,-80.36359,continuous,50,40
+Florida,Key Largo,KL18,Removal,25.11549,-80.27799,continuous,24,18
+Florida,Key Largo,KL19,Non-removal,25.12948,-80.26458,continuous,50,40
+Florida,Matecumbe Key,Mate,Removal,24.83727,-80.73035,patch,65,32
+Florida,Tennessee Reef,Ten1,Removal,24.76258,-80.75648,continuous,50,40
+Florida,Tennessee Reef,Ten2,Non-removal,24.76418,-80.75455,continuous,50,40
+Florida,Tennessee Reef,Ten3,Removal,24.76603,-80.75181,continuous,50,40

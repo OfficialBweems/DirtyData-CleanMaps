@@ -14,7 +14,7 @@
 
 ### potential analyses we could do/ questions to ask
 # does the removal of an invasive species affect the local species?
-  #ANOVA looking at the difference in the two species densities on remval and non removal site
-# Is there a differnce in species density by management location? or latitutde?
+  #ANOVA looking at the difference in the two species densities on removal and non removal site
+# Is there a difference in species density by management location? or latitude?
   # lm with density as response and "Location/latitude" as the predictor
 # plot a time series based on session number? i dont think date is in a good format currently...

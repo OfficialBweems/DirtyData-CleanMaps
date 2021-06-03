@@ -11,3 +11,10 @@
 #7. map the species and color by density, shape for species ie two shapes/site
 #-- spit and map only one species at at time? 
 #-- have two maps side by side?
+
+### potential analyses we could do/ questions to ask
+# does the removal of an invasive species affect the local species?
+  #ANOVA looking at the difference in the two species densities on remval and non removal site
+# Is there a differnce in species density by management location? or latitutde?
+  # lm with density as response and "Location/latitude" as the predictor
+# plot a time series based on session number? i dont think date is in a good format currently...

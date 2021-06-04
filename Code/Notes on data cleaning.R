@@ -79,8 +79,3 @@ names(full_summary)
 
 # make new column and calculate density
 full_summary$Density = full_summary$Abundance / full_summary$Site_area
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 5364b3807ab1c703347b678fe10b25cad75b2435

@@ -23,8 +23,8 @@ us.states <- us[us$NAME_1 %in% states,]
 #this should be the dataframe we create
 #keys_fish_data = read_csv('Site.csv')
 
-sites = keys_fish_data %>% 
-  filter(Type == 'Site') 
+#sites = keys_fish_data %>% 
+  #filter(Type == 'Site') 
 
 #make the themes
 fte_theme_map_small <- function(){
@@ -98,10 +98,12 @@ sites_map = ggplot()+
   geom_polygon(data = us.states,aes(x=long,y=lat,group=group), colour = 'grey40', size = 0.01, 
                  fill = 'grey90')+
   coord_cartesian(xlim = c(-81.1,-80.0), ylim = c(24.85,25.75)) +
-  geom_point(data = sites, aes(x=Long,y=Lat, fill = Density, shape = Species), size = 5)+ #actually plot the points of our sites
-  scale_fill_gradient('Density (m2)', low = 'violet', high = 'midnightblue')+ #make the points fill properly
-  scale_shape_manual(values = c(22,21)) + #use the shapes we want (need these ones cuz they have black borders)
-  guides(shape = guide_legend(override.aes = list(size = 4, shape = c(0,1)))) + #display same shapes but no colours in the legend
+  geom_jitter(data = full_summary, aes(x=Long,y=Lat,
+            fill = Species, shape = Type, size=Density),
+             height = 0.05)+ #actually plot the points of our sites
+  scale_fill_discrete('Reef Type')+ #make the points fill properly
+  scale_shape_manual(values = c(22,24)) + #use the shapes we want (need these ones cuz they have black borders)
+  guides(shape = guide_legend(override.aes = list(size = 4, shape = c(0,2)))) + #display same shapes but no colours in the legend
   fte_theme_map_sites() +
   labs(x = 'Longitude', y = 'Latitude')+
   north(location = 'topright', scale = 0.9, symbol = 12, #add north arrow

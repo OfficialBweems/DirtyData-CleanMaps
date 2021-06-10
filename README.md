@@ -1,4 +1,4 @@
-This repository holds the materials for the [BWEEMS](bweems.org) professional development workshop, focusing on R statistical programming, taking place on June 16th, 2021 @ 6:30pm EST.
+This repository holds the materials for the [BWEEMS](https://www.bweems.org/) professional development workshop, focusing on R statistical programming, taking place on June 16th, 2021 @ 6:30pm EST.
 
 If you plan to participate in this workshop, and have not done so already please download [R](https://cran.r-project.org/mirrors.html) and [Rstudio](https://www.rstudio.com/products/rstudio/). You will need both programs. Since this is an interactive workshop you will get the most out of it if these programs are installed prior to the start of the workshop.
 

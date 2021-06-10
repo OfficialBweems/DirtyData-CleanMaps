@@ -1,23 +1,28 @@
 #load libraries we may need (we won't use all of them)
-library(mapdata)
-library(maps)
-library(maptools)
-library(ggmap)
-library(ggrepel)
-library(raster)
-library(ggthemes)
-library(ggsn)
-library(rgeos)
-library(rgdal)
-library(tidyverse)
-library(cowplot)
+ #library(mapdata)
+ library(maps) 
+ library(maptools)
+ install.packages("ggmap")
+ library(ggmap)
+# library(ggrepel)
+ library(raster) # US MAP
+# library(ggthemes)
+install.packages("ggsn")
+  library(ggsn)# for the scale bar
+# library(rgeos)
+# library(rgdal)
+# library(tidyverse)
+ library(cowplot)# inset map
 
 #pull data from the internet
-us <- getData("GADM",country="USA",level=1)
+# Grab the US map, it is a large spatialpolygon dataframe
+ # GADM' is a database of global administrative boundaries
+# you must also provide the level of administrative subdivision (0=country, 1=first level subdivision)
+us <- getData("GADM",country="USA",level=1) # raster package
 
-#keep only Florida
+# Want to keep our study area which is in florida ... you can say oyher states too by adding them to this vector
 states <- c('Florida')
-us.states <- us[us$NAME_1 %in% states,]
+us.states <- us[us$NAME_1 %in% states,] # find the NAME_1 that matches your states
 
 #read in the data and keep only what we need-- 
 #this should be the dataframe we create
@@ -83,7 +88,7 @@ continent = ggplot()+
   geom_polygon(data = us.states,aes(x=long,y=lat,group=group), colour = 'midnightblue', size = 0.01, #put in FL shapefile
                fill = 'grey70')+
   coord_cartesian(xlim = c(-93.9,-75.85), ylim = c(24.1,32.5)) + #delimit where we are
-  fte_theme_map_small() + #bring in the map
+  #fte_theme_map_small() + #bring in the map
   annotate("rect", xmin = -79, xmax = -82, ymin = 24.5, ymax = 25.5, alpha = .7)+ #shaded study area
   annotate('text', x = -91, y = 25.8, label = 'Gulf of Mexico', size = 4)+
   annotate('text', x = -78, y = 31.2, label = 'Atlantic Ocean', size = 4)+

@@ -26,7 +26,7 @@ Answer the research question: Does the removal of invasive influence the density
 # Install and Load Packages
 
 We are going to do this in bulk by putting all of the package names into a character string.
-```{r,echo=FALSE,message=FALSE,warning=FALSE}
+```{r,message=FALSE,warning=FALSE}
 packages.load = c("tidyverse","ggplot","ggmap","maps","maptools","maps","raster","ggsn","cowplot")
 
 #install.packages(packages.load) 

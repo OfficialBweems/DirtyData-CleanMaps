@@ -3,13 +3,13 @@ title: "From Messy Data to Clean Maps"
 author: "LaTreese Denson & Alex Davis"
 date: "06/16/2021"
 output:
-  word_document:
-    toc: yes
-    toc_depth: '2'
   html_document:
     toc_float: yes
     toc: yes
     toc_depth: 2
+  word_document:
+    toc: yes
+    toc_depth: '2'
 ---
 
 ```{r setup, include=FALSE}
@@ -142,51 +142,68 @@ C. Determine how you wish to join your data. The options are Inner, left ,right,
 ![Image from the data wrangling cheatsheet.](dplyr-joins.png)
 
 
-We are trying to add the information from transect.dat to the species data. Each observation of a species should now have a site name and a date sampled
+We are trying to add the information from transect.dat to the species data. Each observation of a species should now have a site name and a date sampled.
 
 ```{r}
-New = left_join(species.dat,transects.dat,"Transect_id")
+species_trans = left_join(species.dat,transects.dat,"Transect_id")
 
-# Note: it doesn't matter for this data set but might for yours
+dim(species_trans) # Theres is a problem here! You have 10321 records instead of 9927
+# You can also look at the Global Environment to check this
 
 ```
-some exploration I did using `n_distinct()`, `unique()`, `which()`,`table()`, and `%in%`.
+
+Do some exploring using `n_distinct()`, `unique()`, `which()`,`table()`, and `%in%`. Becuase the unique number of Transect_ids is different from the total number of Transect_ids in the Transect.dat data, we can tell there are some duplicates in the data.
 
 ```{r}
 n_distinct(species.dat$Transect_id)
-n_distinct(transects.dat$Transect_id)
-table(unique(transects.dat$Transect_id) %in% unique(species.dat$Transect_id))
+n_distinct(transects.dat$Transect_id) #427
 
-trans = unique(transects.dat$Transect_id)
-spec = unique(species.dat$Transect_id)
-used.id = spec[which(!trans%in%spec )]
+dim(transects.dat) # 431, so we need to remove the duplicates
+
+# Now create a new transect.dat dataframe without any duplicates
+trans.clean = unique(transects.dat)
+
+# Rejoin!
+species_trans.clean = left_join(species.dat,trans.clean)
+
+# Check the dimensions
+dim(species_trans.clean) # Good to go!
+
+# Additional exploration code.
+# table(unique(transects.dat$Transect_id) %in% unique(species.dat$Transect_id))
+# trans = unique(transects.dat$Transect_id)
+# spec = unique(species.dat$Transect_id)
+# used.id = spec[which(!trans%in%spec )]
 ```
 
 Add site information to the data
 
 ```{r}
-full_data = left_join(New,site.dat)
+full_data = left_join(species_trans.clean,site.dat)
 
 dim(full_data)
-names(full_data)
+names(full_data) # all columns are here
 ```
 
 ## Step 3
 We want number of animals of a species per site using dplyr
 ```{r}
 data_sum = full_data %>% # data to manipulate
-  group_by(Site_name, Species) %>% # what column names to group by
+  group_by(Site_name, Species) %>% # what column names to group by, can be any column
   tally() # count them
+# Note: adding column names to the group by argument will increase your number of rows
 
-head(data_sum)
+colnames(data_sum)
+# Notice you have removed some of the other identifiers (any thing at a finer level than site)
 
 # Now apply this new count data back to the original site data using a left join
 full_summary = left_join(data_sum, site.dat)
 
 colnames(full_summary) # make sure everything is there (n, area, lat, lon, etc.)
+# Note: Date is gone since you have aggregated the number of fish over multiple days
 
 # Lets play with renaming more columns ... 
-full_summary= full_summary%>%rename(Abundance =n)
+full_summary= full_summary%>%rename(Abundance = n)
 
 # And finally calculate the density. Make a new column and calculate density.
 full_summary$Density = full_summary$Abundance / full_summary$Site_area

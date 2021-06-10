@@ -23,7 +23,8 @@ Answer the research question: Does the removal of invasive influence the density
 - Perform computations and statistical analyses using various base functions and packages in R.
 - Produce publishable content using the ggplot package in R.
 
-#Install and Load Packages
+# Install and Load Packages
+
 We are going to do this in bulk by putting all of the package names into a character string.
 ```{r,echo=FALSE,message=FALSE,warning=FALSE}
 packages.load = c("tidyverse","ggplot","ggmap","maps","maptools","maps","raster","ggsn","cowplot")

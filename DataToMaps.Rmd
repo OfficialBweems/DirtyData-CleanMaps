@@ -3,6 +3,9 @@ title: "From Messy Data to Clean Maps"
 author: "LaTreese Denson & Alex Davis"
 date: "06/16/2021"
 output:
+  word_document:
+    toc: yes
+    toc_depth: '2'
   html_document:
     toc_float: yes
     toc: yes
@@ -13,14 +16,23 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ## Workshop Goal:
-Answer the research question: Does reef size impact species distribution? Provide maps to help readers visualize the results.
+Answer the research question: Does the removal of invasive influence the density of redband parrotfish and white grunt off the coast of South Florida? Provide maps to help readers visualize the results.
 
 ## Workshop Objectives:
 - Gain a working knowledge of data cleaning steps using the Tidyverse R.
 - Perform computations and statistical analyses using various base functions and packages in R.
 - Produce publishable content using the ggplot package in R.
 
-**Note:** If you have quick questions about how to use these packages check out the cheat sheets:
+#Install and Load Packages
+We are going to do this in bulk by putting all of the package names into a character string.
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+packages.load = c("tidyverse","ggplot","ggmap","maps","maptools","maps","raster","ggsn","cowplot")
+
+#install.packages(packages.load) 
+
+lapply(packages.load, require, character.only = TRUE)
+```
+**Note:** If you have quick questions about how to use the basic packages we will be using today, ggplot and tidyverse, check out the cheat sheets:
 
 [ggplot2 cheat sheet](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf)
 
@@ -29,170 +41,287 @@ Answer the research question: Does reef size impact species distribution? Provid
 ... or **Google it**!
 
 # Import Data
-Read in the [growth_data](https://raw.githubusercontent.com/latreesedenson/SEAinCode/main/growth_data.csv) from Github using `read.csv()` and give it the object name "data" using `=` or `->` as the assignment operator:
+Read in all of the [data](https://github.com/OfficialBweems/DirtyData-CleanMaps/tree/main/Data) from Github using `read.csv()` and give them the object name ".data" using `=` or `->` as the assignment operator. You can right click and save it all to a folder locally or you can pull the data directly from the github site using the code below.
 
 ```{r}
-data = read.csv("https://raw.githubusercontent.com/latreesedenson/SEAinCode/main/growth_data.csv")
+# Set and object to point to the data folder
+data.folder = "https://raw.githubusercontent.com/OfficialBweems/DirtyData-CleanMaps/main/Data/"
 
-data = as.data.frame(data)
+# Read in the different data sources using paste0().
+site.dat=read.csv(paste0(data.folder,"Site_metadata.csv"))
+species.dat=read.csv(paste0(data.folder,"Species.csv"))
+transects.dat=read.csv(paste0(data.folder,"Transects.csv"))
 ```
-**Note:** You could also copy and paste the data from the web browser into an excel file, change the format to comma delimited, saved it as a csv file and then read it in using `read.csv()`. This way you would have a copy of the data on your local drive to read from. You would need to replace the weblink with the path to the data on your local computer.
 
-# Clean Data
-Make sure the data was read in correctly using the function `head()`. And look at parts of the data using the `$` operator. 
+# Data Exploration
+Make sure the data was read in correctly using the functions `head()`, `colnames()`, `dim()`, `str()`, `summary()`, and `table()`. 
 ```{r}
-head(data)
+head(species.dat)
+colnames(species.dat)
+dim(species.dat)
 
-data$temp_range
+table(species.dat$Species) # See how many of each species you have
+
+table(!is.na(species.dat$Transect_id)) # Are there any NAs in the data?
+
+str(species.dat)
+summary(species.dat)
 ```
 **ProTip:** Not sure what a function does? Type `?head()` into the console and see what pops up in the help menu. Scroll down to the bottom--there are often examples of how to use the function that you can practice with.
 
-What are the column names? Is everything there that should be there?
+# Answering the Question
+Goal: 
+Answer the question, does invasive species removal impact on species density? 
+
+What do we need to answer this question?
+
+Density and the location of those densities.
+
+Density = number of animals at a site/area of the site 
+
+Problems: 
+
+1) We don't know the area of these sites. 
+
+2) We don't know how many animals are at each site.
+
+3) The data is spread across three data sheets. 
+
+Simple Solutions: 
+
+1) Do some pre-calculations 
+
+2) Join the data 
+
+3) Do some final minipuations/calculations. 
+
+## Step 1
+Calculate the area of each site from the site_metadata.csv. We will need to create a new column by the name 'site_area'.
 ```{r}
-names(data)
-```
+colnames(site.dat) # first messy data issue: column names read in weird so lets change them
 
-What are the dimensions of the dataset, how many rows and columns?
+# Here we use the tidyverse package 
+# which allows us to do piping (%>%) and the dplyr package
+site.dat = site.dat%>%rename(Site_Length_m=Site.Length..m.,
+                                 Site_Width_m =Site.Width..m.)
+
+# Now we can do the area calculation
+site.dat$Site_area = site.dat$Site_Length_m*site.dat$Site_Width_m
+```
+That was easy! Now for the  weird part!
+
+## Step 2
+Joining the data! Here are some steps to work through that typically can help you get started.
+
+A.Determine the base file. The base file establishes the unit of analysis.
+Some Hints: 
+
+Normally, when the relationship is that of one to many [1:0-N], the base file is the one with the many entities.
+
+If the relationship is that of one to one [1:0-1],the base file is normally the one with the least number of cases.
 ```{r}
-dim(data)
+str(site.dat)
+str(transects.dat)
+str(species.dat)
+
+# Species.dat is our base file (it is the one with the many entities)
 ```
 
-
-Let's get some basic summary statistics from our data: minimums, maximums and means.
-```{r}
-summary(data)
-```
-
-
-You will notice that there were multiple species here and some NAs in the data. Let's work with the first species and remove the bad records.
-We will use the pipe operator `%>%` from the magrittr package within the tidyverse to do this. This syntax leads to code that is easier to write and to read. Use the keyboard shortcut: Ctrl + Shift + M (Windows) or Cmd + Shift + M (Mac) to get the pipe operator.
+B.  Determine the common identifiers. Which csv file has a common identifier with the species csv file?
 
 ```{r}
-library(tidyverse)
-Species_A_Clean = data %>% filter(species =="A",!is.na(temp_range))
+str(site.dat)
+str(transects.dat)
+str(species.dat)
 
-head(Species_A_Clean)
-dim(Species_A_Clean)
-summary(Species_A_Clean)
+# transect.dat has a common identifier which is "Transect_id", it should be unique to each
 ```
 
-Notice that there are no more NAs in the temp_range summary.
+C. Determine how you wish to join your data. The options are Inner, left ,right, full. See the [data wrangling cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf) for details.
+![Image from the data wrangling cheatsheet.](dplyr-joins.png)
+
+
+We are trying to add the information from transect.dat to the species data. Each observation of a species should now have a site name and a date sampled
+
 ```{r}
-Species_A_Clean$temp_range
+New = left_join(species.dat,transects.dat,"Transect_id")
+
+# Note: it doesn't matter for this data set but might for yours
+
 ```
+some exploration I did using `n_distinct()`, `unique()`, `which()`,`table()`, and `%in%`.
 
-# Basic Visualization and Analyses
-Let's do a boxplot of our response vs. our explanatory variables. Here we are using the ggplot2 package, but I also provide code for using Base R.
-
-ggplot can get a bit complex depending on what you want to do but the basic components are typically the same. 
-
-You will notice that I have commented out some lines of code using '#'. This allows me to block out lines that I don't want to run, as well as create comments for a better explanation of my code. 
-
-```{r, echo=TRUE}
-# ggplot general inputs/arguments (data, aesthetics - x and y) + plot type + etc.
-
-ggplot(Species_A_Clean, aes(x=as.factor(daylength), y=growth)) + 
-  geom_boxplot(fill="slateblue", alpha=0.2) +  xlab("day length")
-
-# To save to a file for viewing later we use the function ggsave()
-# The .tiff extension is the type of file, you can also use .jpg
-# .tiff files are good for publication graphics
-# ggsave("boxplot_daylength.tiff")
-
-
-# Change the x variable to graph a different explanatory variable
-ggplot(Species_A_Clean, aes(x=as.factor(temp_range), y=growth)) + 
-  geom_boxplot(fill="slateblue", alpha=0.2) +  xlab("temp")
-
-# ggsave("boxplot_temp.tiff")
-
-# Here is the code to create a boxplot and save it in Base R
-# Remove the # to run these 3 lines
-# tiff("boxplot.tiff")
-# boxplot(growth~temp_range,data=Species_A_Clean,xlab="temp_range", ylab="growth(wt")
-# dev.off() 
-```
-Notice the way we save graphics is different depending on the package we are using. Also `dev.off()` closes all graphics devices so you can start a fresh graph next time.
-
-Create a histogram of the data using the `geom_histogram()` function. Change the `binwidth` to see what happens.
 ```{r}
-ggplot(Species_A_Clean, aes(x = growth)) +
-  geom_histogram(binwidth = 1)
+n_distinct(species.dat$Transect_id)
+n_distinct(transects.dat$Transect_id)
+table(unique(transects.dat$Transect_id) %in% unique(species.dat$Transect_id))
 
-# You can remove the '#' in the line below if you want to save this
-# ggsave("DataDistribution.tiff") 
-
-# Base R
-# hist(Species_A_Clean$growth, breaks=1, col="darkgrey", main = "", xlab="growth") 
+trans = unique(transects.dat$Transect_id)
+spec = unique(species.dat$Transect_id)
+used.id = spec[which(!trans%in%spec )]
 ```
 
+Add site information to the data
+
+```{r}
+full_data = left_join(New,site.dat)
+
+dim(full_data)
+names(full_data)
+```
+
+## Step 3
+We want number of animals of a species per site using dplyr
+```{r}
+data_sum = full_data %>% # data to manipulate
+  group_by(Site_name, Species) %>% # what column names to group by
+  tally() # count them
+
+head(data_sum)
+
+# Now apply this new count data back to the original site data using a left join
+full_summary = left_join(data_sum, site.dat)
+
+colnames(full_summary) # make sure everything is there (n, area, lat, lon, etc.)
+
+# Lets play with renaming more columns ... 
+full_summary= full_summary%>%rename(Abundance =n)
+
+# And finally calculate the density. Make a new column and calculate density.
+full_summary$Density = full_summary$Abundance / full_summary$Site_area
+```
+
+# Basic Boxplot and ANOVA
+Now that we have the data together, lets look at the Treatment impact on density using a box plot and ANOVA
+
+```{r}
+# box plot in ggplot split by species and treatment
+ggplot(full_summary, aes(x= Treatment, y=Density)) + 
+  geom_boxplot()+facet_wrap(~Species)+ ylim(0,1)
+```
+
+We missed something! We have another messy data issue. The Treatment "non-removal" was entered two different ways.We can use dplyr `recode()` to fix this.
+```{r}
+full_summary = full_summary %>%
+  mutate(Treatment = recode(Treatment, "non-removal" = "Non-Removal",
+                          "Non-removal" = "Non-Removal"))
+# Try the boxplot again
+ggplot(full_summary, aes(x= Treatment, y=Density)) + 
+  geom_boxplot()+facet_wrap(~Species)+ ylim(0,1)
+```
+
+Looks good now lets explore the Treatments on each species density, statistically. You can use `aov()` from base r for this. Use `summary()` to determine the influence of your factors. 
+```{r}
+Full.aov = aov(Density~Treatment*Species, data = full_summary)
+summary(Full.aov)
+
+# We see that the species and treatment have a significant impact on our results
+```
 
 # Mapping
-Let's fit a basic linear model to the data, to determine the impact of day length and temperature  on species growth.
 
-We use the `lm()` function which needs model and the data as it's input. The model is setup using a $\sim$, where $y\sim x$ means that Y is a function of a series of Xs.
-
-```r
-lm(y ~ x1 + x2 + x3, Data = Data)
-
-```
-Let's run a model with our species data. We tell R that we have factors with multiple levels by using the function `factor()`. If you had a continuous variable you wouldn't need this added piece.
+Now for the part you came here for, MAPPING! We are going to produce one map with three steps. The first step is to map the study densities at the different study sites. The second step is to provide a general map of the study area. And finally we will inset the maps to make one big nice one! We will use the ggplot package with some additoinal mapping packages. I will point them out as we go along. 
 ```{r}
-SpeciesA.lm = lm(growth ~ factor(daylength)*factor(temp_range), data = Species_A_Clean)
+#First lets pull the raster data for the United States from the internet using the raster package.
+us <- getData("GADM",country="USA",level=1)
+# GADM' is a database of global administrative boundaries
+# you must also provide the level of administrative subdivision (0=country, 1=first level subdivision)
+
+# We want to keep our study area which is in Florida. You can add states by adding them to this vector.
+states <- c('Florida')
+us.states <- us[us$NAME_1 %in% states,] # find the NAME_1 that matches your states
 ```
 
-To get a summary of the linear model output we use the function `summary()`.
+## 1 - Site Map
+
+OK now lets map out sites!
 ```{r}
+# the keys are your shape polygon for florida and your data full_summary
+sites_map = ggplot()+ 
+  geom_polygon(data = us.states,aes(x=long,y=lat,group=group), colour = 'grey40', size = 0.01,fill = 'grey90')+
+  geom_jitter(data = full_summary, aes(x=Long,y=Lat, color = Species, size=Density), height = 0.05)
 
-sum.mod = summary(SpeciesA.lm) 
-# since sum.mod is an object 
-# we will need to run the next line to see what is in it
+# Just like this the map looks crazy, lets zoom in. Its messy data so we have some weird data points also. Think about how you can filter those out. That's a hint! 
+sites_map =sites_map+ coord_cartesian(xlim = c(-81.1,-80.0), ylim = c(24.85,25.75)) 
 
-sum.mod
+#Every good map has a compass and a scale bar lets add them.The functions north() and scalebar are both from the package ggsn.
+sites_map =sites_map+north(location = 'topright', scale = 0.9, symbol = 12, x.min = -80.09, x.max = -80.0, y.min = 25.65, y.max = 25.75)+
+scalebar(x.min = -80.80, x.max = -81.1, y.min = 24.875, y.max = 24.96, dist = 10, dist_unit = 'km', transform = TRUE, model = 'WGS84', location = "bottomleft", st.dist = 0.49, height = 0.18) #transform = TRUE assumes coordinates are in decimal degrees
 
-####
-# Additional functions you may find useful in the future
-####
-# coefficients(fit) # model coefficients
-# confint(fit, level=0.95) # CIs for model parameters
-# fitted(fit) # predicted values
-# residuals(fit) # residuals
-# anova(fit) # anova table 
-####
+# the ocean isn't grey, lets change that
+sites_map =sites_map+ theme_bw()+
+  theme(panel.border = element_rect(colour = 'black'))
+
+# We also may want to play with where this legend is later 
+sites_map = sites_map +  theme(legend.position = c(0.90, 0.20))
+
+sites_map
 ```
-Here you have your important outputs to make a conclusion with (pvalues, coefficients, etc.).
 
-Let's save some of that information to an excel file. Note: you cannot save the entire output to a csv using the lines below. You will need additional steps and functions.
+Great! The next one should be easy now.
+
+## 2 - Study Area Map
+Now we are making the larger map, to provide some context for the site map.
 ```{r}
-# save results to an object
-results = sum.mod$coefficients
+# Start off the map similarly to the site map but instead of our data we will be pulling in the shape file for Florida
+continent = ggplot()+
+  geom_polygon(data = us,aes(x=long,y=lat,group=group), colour = 'grey40', 
+               size = 0.01, fill = 'grey90')+
+  geom_polygon(data = us.states,aes(x=long,y=lat,group=group), colour = 'midnightblue', size = 0.01,fill = 'grey70')
 
-# make the object into a dataframe so it is delimited
-# try it without as.data.frame to see what I mean
-out = as.data.frame(results)
+# now reduce the viewing area and delimit where the research took place
+continent = continent+coord_cartesian(xlim = c(-93.9,-75.85), ylim = c(24.1,32.5)) 
+ 
+# Add in the scale bar again
+continent = continent+scalebar(x.min = -93, x.max = -85, y.min = 24.5, y.max = 25.5, dist = 250, dist_unit = 'km', st.size = 3.6, #add scalebar
+                    transform = TRUE, model = 'WGS84', location = 'bottomleft', st.dist = 0.42, height = 0.18) #transform = TRUE assumes coordinates are in decimal degrees
 
-# Write to a csv file 
-write.csv(out,"ModelCoefficients.csv")  
+# New and specific to this study area map - add a shaded study area box
+continent = continent+ annotate("rect", xmin = -79, xmax = -82, ymin = 24.5, ymax = 25.5, alpha = .7) 
 
-# You can also write to a text file using write.table() and .txt file name instead of csv
+# Add an arrow to point to the study region  
+continent = continent + annotate('segment',x=-87, y=27.28, xend=-82.2, yend=25.1, arrow=arrow(length = unit(0.04, "npc")), #arrow
+           alpha = 0.8, size=1.1, color="black")
 
+# add some notation of where you are
+continent = continent+ annotate('text', x = -91, y = 25.8, label = 'Gulf of Mexico', size = 4)+ 
+  annotate('text', x = -78, y = 31.2, label = 'Atlantic Ocean', size = 4)+
+  annotate('text', x = -87, y = 27.8, label = 'Study Area', size = 5)
+
+# Change the background of things
+continent = continent+ theme_bw(base_size = 9) + # black and white theme, gets rid of grey background
+  theme(panel.background = element_rect(fill= 'white',color = 'white')) +
+  theme(panel.border = element_rect(colour = 'black'))
+
+continent
 ```
 
-Let's plot the diagnostics of the model fit to the data.`plot(linearmodel)` produces 4 main plots; each used to diagnose the fit of the model to the data.
+## 3 - Inset the Maps
 ```{r}
-# Remember you can save this graphic by uncommenting the line below
-# be sure to use dev.off after to reset things
+# this just draws the maps on top of one another
+insetmap = ggdraw()+
+  draw_plot(sites_map) + 
+  draw_plot(continent) 
 
-# tiff("ModelDiagnostics.tiff")
-# The graphing format: 2 rows 2 columns
-par(mfrow=c(2,2)) 
+# doesn't look right, right? Now you have to work with dimensions for the 2nd map. See below: x,y, width, and height for the continent/study area map
 
-# type dev.off and run the next line without this function to see what happens
-plot(SpeciesA.lm)
+insetmap = ggdraw()+
+  draw_plot(sites_map) + 
+  draw_plot(continent, x=0.102, y=0.62, width=0.38, height=0.35) 
 
-# close the plotting window and resets things
-dev.off()  
+# Lets see what it looks like 
+insetmap # You can look at it, but it won't look good until you print it
+
+# Use the function ggsave to output your map. Make sure you know where it is being saved to.
+ggsave('study_map.png', plot = insetmap,
+       width = 8, height = 7.5,
+       dpi = 300)
+
 ```
+
+That's all folks!
+
+For more practice, attempt to answer the question of how reef type influences fish density.
 
 # Final ProTips
 1. Comment your code! ( Use the hashtag - # )

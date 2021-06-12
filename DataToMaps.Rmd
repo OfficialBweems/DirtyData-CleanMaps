@@ -16,18 +16,18 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ## Workshop Goal:
-Answer the research question: Does the removal of invasive influence the density of redband parrotfish and white grunt off the coast of South Florida? Provide maps to help readers visualize the results.
+Answer the research question: What are the densities and distribution of redband parrotfish and white grunt off the coast of South Florida? Provide maps to help readers visualize the results.
 
 ## Workshop Objectives:
 - Gain a working knowledge of data cleaning steps using the Tidyverse R.
-- Perform computations and statistical analyses using various base functions and packages in R.
+- Perform computations and basic statistical analyses using various base functions and packages in R.
 - Produce publishable content using the ggplot package in R.
 
 # Install and Load Packages
 
 We are going to do this in bulk by putting all of the package names into a character string.
 ```{r,message=FALSE,warning=FALSE}
-packages.load = c("tidyverse","ggplot","ggmap","maps","maptools","maps","raster","ggsn","cowplot")
+packages.load = c("tidyverse","ggplot2","ggmap","maps","maptools","maps","raster","ggsn","cowplot")
 
 #install.packages(packages.load) 
 
@@ -57,52 +57,48 @@ transects.dat=read.csv(paste0(data.folder,"Transects.csv"))
 # Data Exploration
 Make sure the data was read in correctly using the functions `head()`, `colnames()`, `dim()`, `str()`, `summary()`, and `table()`. 
 ```{r}
-head(species.dat)
+head(species.dat) # shows the first 5 rows
 colnames(species.dat)
-dim(species.dat)
+dim(species.dat)  # shows the dimensions of your dataframe in rows and columns
 
 table(species.dat$Species) # See how many of each species you have
 
 table(!is.na(species.dat$Transect_id)) # Are there any NAs in the data?
 
-str(species.dat)
+str(species.dat) # displays the internal structure of your object
 summary(species.dat)
 ```
 **ProTip:** Not sure what a function does? Type `?head()` into the console and see what pops up in the help menu. Scroll down to the bottom--there are often examples of how to use the function that you can practice with.
 
 # Answering the Question
-Goal: 
-Answer the question, does invasive species removal impact on species density? 
+**Goal:** 
+Answer the question, does invasive species removal impact native species density and distribution? 
 
-What do we need to answer this question?
+**What do we need to answer this question?**
 
 Density and the location of those densities.
 
-Density = number of animals at a site/area of the site 
+*Density* = number of occurrences at a site/area of the site 
 
-Problems: 
+**Problems:** 
 
-1) We don't know the area of these sites. 
+1. We don't know the area of these sites. 
+2. We don't know how many occurrences of a species are at each site.
+3. The data is spread across three data sheets. 
 
-2) We don't know how many animals are at each site.
+**Simple Solutions:** 
 
-3) The data is spread across three data sheets. 
-
-Simple Solutions: 
-
-1) Do some pre-calculations 
-
-2) Join the data 
-
-3) Do some final minipuations/calculations. 
+1. Do some pre-calculations 
+2. Join the data 
+3. Do some final manipulations/calculations. 
 
 ## Step 1
 Calculate the area of each site from the site_metadata.csv. We will need to create a new column by the name 'site_area'.
 ```{r}
-colnames(site.dat) # first messy data issue: column names read in weird so lets change them
+colnames(site.dat) # first messy data issue: column names read in weird so lets change them (i.e.,rename columns and remove the spaces)
 
 # Here we use the tidyverse package 
-# which allows us to do piping (%>%) and the dplyr package
+# which allows us to do piping (%>%) and use the dplyr package
 site.dat = site.dat%>%rename(Site_Length_m=Site.Length..m.,
                                  Site_Width_m =Site.Width..m.)
 
@@ -114,7 +110,7 @@ That was easy! Now for the  weird part!
 ## Step 2
 Joining the data! Here are some steps to work through that typically can help you get started.
 
-A.Determine the base file. The base file establishes the unit of analysis.
+A. Determine the base file. The base file establishes the unit of analysis.
 Some Hints: 
 
 Normally, when the relationship is that of one to many [1:0-N], the base file is the one with the many entities.
@@ -176,7 +172,7 @@ dim(species_trans.clean) # Good to go!
 # used.id = spec[which(!trans%in%spec )]
 ```
 
-Add site information to the data
+Add site information to the data.
 
 ```{r}
 full_data = left_join(species_trans.clean,site.dat)
@@ -186,12 +182,12 @@ names(full_data) # all columns are here
 ```
 
 ## Step 3
-We want number of animals of a species per site using dplyr
+We want number of occurrences of a species per site using dplyr.
 ```{r}
 data_sum = full_data %>% # data to manipulate
   group_by(Site_name, Species) %>% # what column names to group by, can be any column
   tally() # count them
-# Note: adding column names to the group by argument will increase your number of rows
+# Note: adding column names to the group by argument will increase your number of rows/ the amount of data you retain
 
 colnames(data_sum)
 # Notice you have removed some of the other identifiers (any thing at a finer level than site)
@@ -200,7 +196,7 @@ colnames(data_sum)
 full_summary = left_join(data_sum, site.dat)
 
 colnames(full_summary) # make sure everything is there (n, area, lat, lon, etc.)
-# Note: Date is gone since you have aggregated the number of fish over multiple days
+# Note: Date and TL_cm are gone since you have aggregated the number of fish over multiple days
 
 # Lets play with renaming more columns ... 
 full_summary= full_summary%>%rename(Abundance = n)
@@ -210,7 +206,7 @@ full_summary$Density = full_summary$Abundance / full_summary$Site_area
 ```
 
 # Basic Boxplot and ANOVA
-Now that we have the data together, lets look at the Treatment impact on density using a box plot and ANOVA
+Now that we have the data together, lets look at the impact of removal Treatment on density using a box plot and ANOVA.
 
 ```{r}
 # box plot in ggplot split by species and treatment
@@ -228,7 +224,7 @@ ggplot(full_summary, aes(x= Treatment, y=Density)) +
   geom_boxplot()+facet_wrap(~Species)+ ylim(0,1)
 ```
 
-Looks good now lets explore the Treatments on each species density, statistically. You can use `aov()` from base r for this. Use `summary()` to determine the influence of your factors. 
+Looks good! Now lets explore the Treatments on each species density, statistically. An ANOVA is a quick way to identify statistical differences between groups. You can use `aov()` from base r for this. Use `summary()` to determine the influence of your factors. 
 ```{r}
 Full.aov = aov(Density~Treatment*Species, data = full_summary)
 summary(Full.aov)
@@ -238,7 +234,7 @@ summary(Full.aov)
 
 # Mapping
 
-Now for the part you came here for, MAPPING! We are going to produce one map with three steps. The first step is to map the study densities at the different study sites. The second step is to provide a general map of the study area. And finally we will inset the maps to make one big nice one! We will use the ggplot package with some additoinal mapping packages. I will point them out as we go along. 
+Now for the part you came here for, MAPPING! We are going to produce one map with three steps. The first step is to plot the species densities at the different study sites. The second step is to provide a general map of the study area. And finally we will inset the maps to make one big nice one! We will use the ggplot package with some additional mapping packages. We will point them out as we go along. 
 ```{r}
 #First lets pull the raster data for the United States from the internet using the raster package.
 us <- getData("GADM",country="USA",level=1)
@@ -254,24 +250,25 @@ us.states <- us[us$NAME_1 %in% states,] # find the NAME_1 that matches your stat
 
 OK now lets map out sites!
 ```{r}
-# the keys are your shape polygon for florida and your data full_summary
+# the keys are your shape polygon for Florida and your data full_summary
 sites_map = ggplot()+ 
   geom_polygon(data = us.states,aes(x=long,y=lat,group=group), colour = 'grey40', size = 0.01,fill = 'grey90')+
   geom_jitter(data = full_summary, aes(x=Long,y=Lat, color = Species, size=Density), height = 0.05)
 
 # Just like this the map looks crazy, lets zoom in. Its messy data so we have some weird data points also. Think about how you can filter those out. That's a hint! 
-sites_map =sites_map+ coord_cartesian(xlim = c(-81.1,-80.0), ylim = c(24.85,25.75)) 
+sites_map =sites_map+ coord_cartesian(xlim = c(-81.1,-80.0), ylim = c(24.65,25.70)) 
 
 #Every good map has a compass and a scale bar lets add them.The functions north() and scalebar are both from the package ggsn.
-sites_map =sites_map+north(location = 'topright', scale = 0.9, symbol = 12, x.min = -80.09, x.max = -80.0, y.min = 25.65, y.max = 25.75)+
-scalebar(x.min = -80.80, x.max = -81.1, y.min = 24.875, y.max = 24.96, dist = 10, dist_unit = 'km', transform = TRUE, model = 'WGS84', location = "bottomleft", st.dist = 0.49, height = 0.18) #transform = TRUE assumes coordinates are in decimal degrees
+sites_map =sites_map+north(location = 'topright', scale = 0.9, symbol = 12, x.min = -80.09, x.max = -80.0, y.min = 25.6, y.max = 25.7)+
+  scalebar(x.min = -80.80, x.max = -81.1, y.min = 24.66, y.max = 24.72, dist = 10, dist_unit = 'km', transform = TRUE, model = 'WGS84', location = "bottomleft", st.dist = 0.49, height = 0.18) #transform = TRUE assumes coordinates are in decimal degrees 
 
 # the ocean isn't grey, lets change that
 sites_map =sites_map+ theme_bw()+
   theme(panel.border = element_rect(colour = 'black'))
 
 # We also may want to play with where this legend is later 
-sites_map = sites_map +  theme(legend.position = c(0.90, 0.20))
+sites_map = sites_map +  theme(legend.position = c(0.85, 0.20))
+
 
 sites_map
 ```
@@ -312,6 +309,15 @@ continent = continent+ theme_bw(base_size = 9) + # black and white theme, gets r
   theme(panel.border = element_rect(colour = 'black'))
 
 continent
+
+## You can add these arguments to your plot to clean up the edges of the map for final print
+continent + 
+  theme(axis.ticks = element_blank())+
+  theme(axis.text.x = element_blank()) + 
+  theme(axis.text.y = element_blank()) + 
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank())
+
 ```
 
 ## 3 - Inset the Maps
@@ -339,11 +345,11 @@ ggsave('study_map.png', plot = insetmap,
 
 That's all folks!
 
-For more practice, attempt to answer the question of how reef type influences fish density.
+For more practice, attempt to map the answer to the question of how reef type influences fish density.
 
 # Final ProTips
 1. Comment your code! ( Use the hashtag - # )
 2. R is case-sensitive. For example, "head()" is not the same as "Head()." 
-3. Be smart when naming files, folders, etc.. You will be looking for them later. Adding the date or sequential numbers to a folder name is helpful.
+3. Be smart when naming files, folders, etc., you will be looking for them later. Adding the date or sequential numbers to a folder name is helpful.
 4. Debugging is the hardest part. Copy the error you get and google it. The [Stack Overflow](https://stackoverflow.com) community will be your best friend.
-5. There are a million ways to skin a cat! What I showed you here is only one way of using R to do the things we want to do. Find what works for you.
+5. There are a million ways to skin a cat! What we showed you here is only one way of using R to do the things we want to do. Find what works for you.

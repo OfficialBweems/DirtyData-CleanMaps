@@ -5,7 +5,7 @@ If you plan to participate in this workshop, and have not done so already please
 If at anytime you lose track of where we are in the workshop please go to the website and use this [link](DataToMaps.html) to follow along. The tutorial will only show up properly from the [website home](https://OfficialBweems.github.io/DirtyData-CleanMaps/), not from within the repository.
 
 If you have any questions after the workshop feel free to email us: latreese.denson@gmail.com and/or
-acdavis@ualberta.ca. 
+adavis1152@gmail.com. 
 
 After the workshop you can visit the GitHub page for this repository and use the raw Rmarkdown files (.Rmd) as a base to start your own R projects.
 
